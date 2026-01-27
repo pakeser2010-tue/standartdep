@@ -62,7 +62,7 @@
         // Define Document Map with new logic
         const DOCS_MAP = {
             INDEX: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/index.txt",
-            MID: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/mid.txt",
+            MID: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/MID.txt",
             DOC_1: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_1_PRINCIPLES_AND_SOURCES.txt",
             DOC_2: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_2_MESSAGE_TYPES_AND_FORMATS.txt",
             DOC_3: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_3_NEWS_STRUCTURE.txt",
@@ -71,16 +71,17 @@
 
         const ROUTER_SYSTEM_PROMPT = `
 Вы — система маршрутизации запросов к базе знаний ТАСС.
-Ваша задача: проанализировать запрос пользователя и ОГЛАВЛЕНИЕ (Index), чтобы определить, какой из 4 документов содержит ответ.
+Ваша задача: проанализировать запрос пользователя и ОГЛАВЛЕНИЕ (Index), чтобы определить, какой из 5 документов содержит ответ.
 
 ДОКУМЕНТЫ:
 DOC_1: Принципы, источники, этика, общие правила.
 DOC_2: Виды сообщений, форматы (молния, срочно), заголовки.
 DOC_3: Структура новости, лид, бэкграунд, цитаты, эмбарго.
 DOC_4: Производство, выпуск, правка, работа с коррсетью.
+MID: Частные правила для работы с материалами МИД РФ.
 
 ИНСТРУКЦИЯ:
-- Верни ТОЛЬКО код документа: "DOC_1", "DOC_2", "DOC_3" или "DOC_4".
+- Верни ТОЛЬКО код документа: "DOC_1", "DOC_2", "DOC_3", "DOC_4" или "MID".
 - Если запрос общий (приветствие, суть ТАСС) — верни "DOC_1".
 - Если запрос не подходит ни под один, верни "DOC_1".
 - НИКАКИХ дополнительных слов. Только код.
@@ -288,7 +289,7 @@ DOC_4: Производство, выпуск, правка, работа с к�
                         targetDoc = targetDoc.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
                         
                         // Fallback validation
-                        const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4"];
+                        const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4", "MID"];
                         if (!validDocs.includes(targetDoc)) {
                             console.warn("Router returned invalid doc:", targetDoc);
                             targetDoc = "DOC_1"; // Default fallback
