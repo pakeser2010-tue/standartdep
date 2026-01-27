@@ -57,7 +57,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const API_KEY = "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";
+        const API_KEY = "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";
         
         // Define Document Map with new logic
         const DOCS_MAP = {
@@ -223,37 +223,31 @@ DOC_4: Производство, выпуск, правка, работа с к�
                         })
                     });
 
-                    // Check if router response is OK
-                    if (!routerResponse.ok) {
-                        const errorData = await routerResponse.json().catch(() => ({}));
-                        console.error("Router API Error:", errorData);
-                        throw new Error(errorData.error?.message || `Ошибка API роутера: ${routerResponse.status}`);
-                    }
-
                     const routerData = await routerResponse.json();
+                    console.log("Router response:", routerData);
                     
-                    // Check for API error in response body
+                    // Check for router API errors
                     if (routerData.error) {
-                        console.error("Router returned error:", routerData.error);
-                        throw new Error(routerData.error.message || "Ошибка маршрутизации");
-                    }
-
-                    // *** FIX: Safely extract targetDoc with null checks ***
-                    let rawContent = routerData.choices?.[0]?.message?.content;
-                    let targetDoc;
-
-                    if (rawContent && typeof rawContent === 'string') {
-                        targetDoc = rawContent.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
-                    } else {
-                        console.warn("Router returned empty or invalid content:", rawContent);
-                        targetDoc = "DOC_1"; // Default fallback
+                        console.error("Router API error:", routerData.error);
+                        // Continue with default doc instead of throwing
                     }
                     
-                    // Fallback validation
-                    const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4"];
-                    if (!validDocs.includes(targetDoc)) {
-                        console.warn("Router returned invalid doc:", targetDoc, "- defaulting to DOC_1");
-                        targetDoc = "DOC_1"; // Default fallback
+                    let targetDoc = routerData.choices?.[0]?.message?.content;
+                    
+                    // Check if we got a valid response
+                    if (!targetDoc) {
+                        console.warn("Router returned empty response, using default DOC_1");
+                        targetDoc = "DOC_1";
+                    } else {
+                        // Cleanup router response (remove punctuation etc)
+                        targetDoc = targetDoc.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                        
+                        // Fallback validation
+                        const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4"];
+                        if (!validDocs.includes(targetDoc)) {
+                            console.warn("Router returned invalid doc:", targetDoc);
+                            targetDoc = "DOC_1"; // Default fallback
+                        }
                     }
 
                     console.log(`Router selected: ${targetDoc}`);
@@ -270,7 +264,7 @@ DOC_4: Производство, выпуск, правка, работа с к�
 ${docText}
 
 === MID CONTEXT (APPENDIX) ===
-${docsContent.MID || ''}
+${docsContent.MID}
 `;
 
                     const finalSystemMessage = FINAL_SYSTEM_PROMPT + fullContext + "\n</CONTEXT>";
@@ -287,7 +281,6 @@ ${docsContent.MID || ''}
                             model: "meta-llama/llama-3.3-70b-instruct:free",
                             messages: [
                                 { role: "system", content: finalSystemMessage },
-                                ...messages.slice(-2), // Only very recent context to keep focus on the doc
                                 userMessage
                             ],
                             temperature: 0.1,
@@ -295,15 +288,16 @@ ${docsContent.MID || ''}
                         })
                     });
 
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.error?.message || "Ошибка API при генерации ответа");
-                    }
-
                     const data = await response.json();
+                    console.log("Main API response:", data);
                     
+                    // Check for API errors
                     if (data.error) {
-                        throw new Error(data.error.message || "Ошибка генерации ответа");
+                        throw new Error(data.error.message || "Ошибка API: " + JSON.stringify(data.error));
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`API вернул статус ${response.status}: ${JSON.stringify(data)}`);
                     }
 
                     const aiContent = data.choices?.[0]?.message?.content || "Не удалось сгенерировать ответ.";
