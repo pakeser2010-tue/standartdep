@@ -223,16 +223,36 @@ DOC_4: Производство, выпуск, правка, работа с к�
                         })
                     });
 
+                    // Check if router response is OK
+                    if (!routerResponse.ok) {
+                        const errorData = await routerResponse.json().catch(() => ({}));
+                        console.error("Router API Error:", errorData);
+                        throw new Error(errorData.error?.message || `Ошибка API роутера: ${routerResponse.status}`);
+                    }
+
                     const routerData = await routerResponse.json();
-                    let targetDoc = routerData.choices?.[0]?.message?.content?.trim().toUpperCase();
                     
-                    // Cleanup router response (remove punctuation etc)
-                    targetDoc = targetDoc.replace(/[^A-Z0-9_]/g, '');
+                    // Check for API error in response body
+                    if (routerData.error) {
+                        console.error("Router returned error:", routerData.error);
+                        throw new Error(routerData.error.message || "Ошибка маршрутизации");
+                    }
+
+                    // *** FIX: Safely extract targetDoc with null checks ***
+                    let rawContent = routerData.choices?.[0]?.message?.content;
+                    let targetDoc;
+
+                    if (rawContent && typeof rawContent === 'string') {
+                        targetDoc = rawContent.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                    } else {
+                        console.warn("Router returned empty or invalid content:", rawContent);
+                        targetDoc = "DOC_1"; // Default fallback
+                    }
                     
                     // Fallback validation
                     const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4"];
                     if (!validDocs.includes(targetDoc)) {
-                        console.warn("Router returned invalid doc:", targetDoc);
+                        console.warn("Router returned invalid doc:", targetDoc, "- defaulting to DOC_1");
                         targetDoc = "DOC_1"; // Default fallback
                     }
 
@@ -250,7 +270,7 @@ DOC_4: Производство, выпуск, правка, работа с к�
 ${docText}
 
 === MID CONTEXT (APPENDIX) ===
-${docsContent.MID}
+${docsContent.MID || ''}
 `;
 
                     const finalSystemMessage = FINAL_SYSTEM_PROMPT + fullContext + "\n</CONTEXT>";
@@ -275,9 +295,17 @@ ${docsContent.MID}
                         })
                     });
 
-                    if (!response.ok) throw new Error("Ошибка API при генерации ответа");
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error?.message || "Ошибка API при генерации ответа");
+                    }
 
                     const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message || "Ошибка генерации ответа");
+                    }
+
                     const aiContent = data.choices?.[0]?.message?.content || "Не удалось сгенерировать ответ.";
 
                     setMessages(prev => [...prev, { role: 'assistant', content: aiContent, meta: targetDoc }]);
