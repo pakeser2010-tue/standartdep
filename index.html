@@ -66,23 +66,32 @@
             DOC_1: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_1_PRINCIPLES_AND_SOURCES.txt",
             DOC_2: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_2_MESSAGE_TYPES_AND_FORMATS.txt",
             DOC_3: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_3_NEWS_STRUCTURE.txt",
-            DOC_4: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_4_PRODUCTION_AND_PUBLISHING.txt"
+            DOC_4: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_4_PRODUCTION_AND_PUBLISHING.txt",
+            DOC_5: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/DOC_5_BASIC_PRINCIPLES_AND_ETHICS.txt",
+            APX_2: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/APX_2_NEWS_FEED_FORMAT_REQUIREMENTS.txt",
+            APX_3: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/APX_3_SITE_FORMAT_REQUIREMENTS.txt",
+            APX_4: "https://raw.githubusercontent.com/pakeser2010-tue/standart/refs/heads/main/APX_4_RELEASE_DIRECTION_CODES.txt"
         };
 
         const ROUTER_SYSTEM_PROMPT = `
 Вы — система маршрутизации запросов к базе знаний ТАСС.
-Ваша задача: проанализировать запрос пользователя и ОГЛАВЛЕНИЕ (Index), чтобы определить, какой из 5 документов содержит ответ.
+Ваша задача: проанализировать запрос пользователя и ОГЛАВЛЕНИЕ (Index), чтобы определить, какой из 9 документов содержит ответ.
 
 ДОКУМЕНТЫ:
 DOC_1: Принципы, источники, этика, общие правила.
 DOC_2: Виды сообщений, форматы (молния, срочно), заголовки.
 DOC_3: Структура новости, лид, бэкграунд, цитаты, эмбарго.
 DOC_4: Производство, выпуск, правка, работа с коррсетью.
-MID: Частные правила для работы с материалами МИД РФ.
+DOC_5: Основные ценности ТАСС, профессиональная этика, организация редакционной работы.
+APX_2: Технические требования и формат новостных сообщений на ленте.
+APX_3: Технические требования и формат неновостных материалов на сайте.
+APX_4: Коды направлений выпуска сообщений и служебные направления.
+MID: Частные и специальные правила работы с материалами МИД РФ.
+
 
 ИНСТРУКЦИЯ:
-- Верни ТОЛЬКО код документа: "DOC_1", "DOC_2", "DOC_3", "DOC_4" или "MID".
-- Если запрос общий (приветствие, суть ТАСС) — верни "DOC_1".
+- Верни ТОЛЬКО код документа: "DOC_1", "DOC_2", "DOC_3", "DOC_4", "DOC_5", "APX_2", "APX_3", "APX_4" или "MID".
+- Если запрос общий (приветствие) — верни "DOC_1".
 - Если запрос не подходит ни под один, верни "DOC_1".
 - НИКАКИХ дополнительных слов. Только код.
 `;
@@ -121,7 +130,11 @@ MID: Частные правила для работы с материалами
                 DOC_1: null,
                 DOC_2: null,
                 DOC_3: null,
-                DOC_4: null
+                DOC_4: null,
+                DOC_5: null,
+                APX_2: null,
+                APX_3: null,
+                APX_4: null
             });
             
             const [isLoadingInit, setIsLoadingInit] = useState(true);
@@ -289,7 +302,7 @@ MID: Частные правила для работы с материалами
                         targetDoc = targetDoc.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
                         
                         // Fallback validation
-                        const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4", "MID"];
+                        const validDocs = ["DOC_1", "DOC_2", "DOC_3", "DOC_4", "DOC_5", "APX_2", "APX_3", "APX_4", "MID"];
                         if (!validDocs.includes(targetDoc)) {
                             console.warn("Router returned invalid doc:", targetDoc);
                             targetDoc = "DOC_1"; // Default fallback
